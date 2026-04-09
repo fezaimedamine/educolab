@@ -1,0 +1,83 @@
+/* ── Messages Page ── */
+.conv-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.conv-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: var(--transition);
+  text-decoration: none;
+}
+
+.conv-item:hover {
+  border-color: var(--border-hover);
+  background: var(--surface-2);
+  transform: translateX(3px);
+}
+
+.conv-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--indigo), var(--violet));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+  text-transform: uppercase;
+}
+
+.conv-avatar-group {
+  background: linear-gradient(135deg, var(--emerald), #059669);
+  font-size: 1.1rem;
+}
+
+.conv-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.conv-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.conv-sub {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  margin-top: 0.15rem;
+}
+
+.conv-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(16,185,129,0.1);
+  color: #6ee7b7;
+  border: 1px solid rgba(16,185,129,0.2);
+  flex-shrink: 0;
+}
+
+/* Search */
+.conv-search {
+  margin-bottom: 1.25rem;
+}
+
+/* Modal handled by global .modal styles */
