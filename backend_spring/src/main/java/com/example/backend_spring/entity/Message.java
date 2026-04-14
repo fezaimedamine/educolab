@@ -28,6 +28,10 @@ public class Message {
     @Builder.Default
     private boolean isRead = false;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean edited = false;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 

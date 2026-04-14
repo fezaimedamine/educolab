@@ -27,7 +27,7 @@ export default function DirectoryPage() {
 
   const startConversation = async (userId) => {
     try {
-      const { data } = await api.post('/conversations', { type: 'direct', memberIds: [userId] });
+      const { data } = await api.post('/conversations', { type: 'DIRECT', memberIds: [userId] });
       navigate(`/messages/${data.id}`);
     } catch (err) { console.error(err); }
   };

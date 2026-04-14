@@ -60,6 +60,7 @@ CREATE TABLE messages (
     sender_id           UUID        NOT NULL REFERENCES users (id) ON DELETE CASCADE,
     content             TEXT        NOT NULL,
     is_read             BOOLEAN     NOT NULL DEFAULT FALSE,
+    edited		        BOOLEAN	    NOT NULL DEFAULT FALSE,
     created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -123,6 +124,42 @@ CREATE TABLE notifications (
 
 CREATE INDEX idx_notifications_user     ON notifications (user_id, is_read, created_at DESC);
 CREATE INDEX idx_notifications_ref      ON notifications (reference_id);
+
+-- ============================================================
+-- Migration: Add Conversation Events & Message Attachments
+-- ============================================================
+ 
+-- Conversation Events Table
+CREATE TYPE event_type AS ENUM ('member_joined', 'member_left');
+ 
+CREATE TABLE conversation_events (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    conversation_id UUID        NOT NULL REFERENCES conversations (id) ON DELETE CASCADE,
+    event_type      event_type  NOT NULL,
+    user_id         UUID        NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    triggered_by_id UUID        REFERENCES users (id) ON DELETE SET NULL,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+ 
+CREATE INDEX idx_conv_events_conversation ON conversation_events (conversation_id, created_at DESC);
+CREATE INDEX idx_conv_events_user ON conversation_events (user_id);
+ 
+-- Message Attachments Table
+CREATE TABLE message_attachments (
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    message_id  UUID         NOT NULL REFERENCES messages (id) ON DELETE CASCADE,
+    file_name   VARCHAR(255) NOT NULL,
+    file_path   TEXT         NOT NULL,
+    file_size   BIGINT       NOT NULL,
+    mime_type   VARCHAR(100) NOT NULL,
+    created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+ 
+CREATE INDEX idx_attachments_message ON message_attachments (message_id);
+ 
+-- ============================================================
+-- END OF MIGRATION
+-- ============================================================
 
 -- ============================================================
 -- END OF SCHEMA

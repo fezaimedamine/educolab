@@ -1,0 +1,16 @@
+/* Confirm Modal */
+.modal-confirm {
+  max-width: 420px;
+}
+
+/* Danger button variant */
+.btn-danger {
+  background: var(--red);
+  color: #fff;
+  border: 1px solid var(--red);
+}
+
+.btn-danger:hover {
+  background: #dc2626;
+  border-color: #dc2626;
+}

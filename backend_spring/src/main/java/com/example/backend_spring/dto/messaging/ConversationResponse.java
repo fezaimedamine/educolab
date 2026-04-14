@@ -1,6 +1,8 @@
 package com.example.backend_spring.dto.messaging;
 
 import com.example.backend_spring.entity.Conversation;
+import com.example.backend_spring.enums.UserRole;
+
 import lombok.Data;
 
 import java.time.OffsetDateTime;
@@ -15,12 +17,15 @@ public class ConversationResponse {
     private OffsetDateTime createdAt;
     private List<MemberInfo> members;
 
+    private String inviteCode; // Only for group conversations
+
     @Data
     public static class MemberInfo {
         private UUID userId;
         private String firstName;
         private String lastName;
         private String email;
+        private UserRole role;
     }
 
     public static ConversationResponse from(Conversation c) {
@@ -28,6 +33,7 @@ public class ConversationResponse {
         r.id = c.getId();
         r.type = c.getType().name().toLowerCase();
         r.name = c.getName();
+        r.inviteCode = c.getInviteCode();
         r.createdAt = c.getCreatedAt();
         r.members = c.getMembers().stream().map(m -> {
             MemberInfo mi = new MemberInfo();
@@ -35,6 +41,7 @@ public class ConversationResponse {
             mi.firstName = m.getUser().getFirstName();
             mi.lastName = m.getUser().getLastName();
             mi.email = m.getUser().getEmail();
+            mi.role = m.getUser().getRole();
             return mi;
         }).toList();
         return r;

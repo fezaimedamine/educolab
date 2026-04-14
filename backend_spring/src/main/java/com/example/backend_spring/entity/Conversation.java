@@ -18,6 +18,9 @@ public class Conversation {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @Column(name = "invite_code", length = 6, unique = true)
+    private String inviteCode;
+
     // converter (ConversationTypeConverter, autoApply=true) handles lowercase mapping
     @Column(nullable = false, columnDefinition = "conversation_type")
     private ConversationType type;

@@ -3,34 +3,88 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
+import Toast from '../components/Toast';
 import './MessagesPage.css';
+import ConfirmModal from '../components/ConfirmModal';
 
 export default function MessagesPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [confirmModal, setConfirmModal] = useState(null);
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [showModal, setShowModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showJoinModal, setShowJoinModal] = useState(false);
   const [groupName, setGroupName] = useState('');
-  const [memberIds, setMemberIds] = useState('');
+  const [joinCode, setJoinCode] = useState('');
+  const [toast, setToast] = useState(null);
+
+  const isTeacherOrAdmin = user?.role === 'teacher' || user?.role === 'admin';
+
+  const showToast = (message, type = 'info') => {
+    setToast({ message, type });
+  };
 
   useEffect(() => {
+    loadConversations();
+  }, []);
+
+  const loadConversations = () => {
     api.get('/conversations')
       .then(r => setConversations(r.data))
       .finally(() => setLoading(false));
-  }, []);
+  };
+  
+  const deleteConversation = (convId, convName) => {
+    setConfirmModal({
+      title: 'Delete Conversation',
+      message: `Permanently delete "${convName}"? This cannot be undone.`,
+      confirmText: 'Delete',
+      danger: true,
+      onConfirm: async () => {
+        try {
+          await api.delete(`/conversations/${convId}`);
+          setConversations(prev => prev.filter(c => c.id !== convId));
+          showToast('Conversation deleted', 'success');
+        } catch (err) {
+          showToast('Failed to delete conversation', 'error');
+        }
+        setConfirmModal(null);
+      },
+      onCancel: () => setConfirmModal(null)
+    });
+  };
 
   const createGroup = async (e) => {
     e.preventDefault();
-    const ids = memberIds.split(',').map(s => s.trim()).filter(Boolean);
-    const { data } = await api.post('/conversations', {
-      type: 'group', name: groupName, memberIds: ids
-    });
-    setConversations(prev => [data, ...prev]);
-    setShowModal(false);
-    setGroupName('');
-    setMemberIds('');
+    try {
+      const { data } = await api.post('/conversations', {
+        type: 'GROUP',
+        name: groupName
+      });
+      setConversations(prev => [data, ...prev]);
+      setShowCreateModal(false);
+      setGroupName('');
+      showToast('Group created successfully', 'success');
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Failed to create group', 'error');
+    }
+  };
+
+  const joinByCode = async (e) => {
+    e.preventDefault();
+    try {
+      const { data } = await api.post('/conversations/join', {
+        code: joinCode.toUpperCase()
+      });
+      setConversations(prev => [data, ...prev]);
+      setShowJoinModal(false);
+      setJoinCode('');
+      showToast('Joined group successfully', 'success');
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Invalid invite code', 'error');
+    }
   };
 
   const getConvName = (conv) => {
@@ -59,9 +113,16 @@ export default function MessagesPage() {
             <h1>Messages</h1>
             <p>{conversations.length} conversation{conversations.length !== 1 ? 's' : ''}</p>
           </div>
-          <button className="btn btn-primary" onClick={() => setShowModal(true)}>
-            + New Group
-          </button>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button className="btn btn-secondary" onClick={() => setShowJoinModal(true)}>
+              Join Group
+            </button>
+            {isTeacherOrAdmin && (
+              <button className="btn btn-primary" onClick={() => setShowCreateModal(true)}>
+                + New Group
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Search */}
@@ -80,7 +141,7 @@ export default function MessagesPage() {
           <div className="empty-state">
             <div className="empty-state-icon">💬</div>
             <h3>No conversations</h3>
-            <p>Go to the <strong>Directory</strong> and message a user to start chatting</p>
+            <p>Join a group with an invite code or start a direct message</p>
           </div>
         ) : (
           <div className="conv-list">
@@ -88,34 +149,53 @@ export default function MessagesPage() {
               <div
                 key={conv.id}
                 className="conv-item"
-                onClick={() => navigate(`/messages/${conv.id}`)}
+                style={{ position: 'relative' }}
               >
-                <div className={`conv-avatar ${conv.type === 'group' ? 'conv-avatar-group' : ''}`}>
-                  {conv.type === 'group' ? '👥' : getInitials(conv)}
-                </div>
-                <div className="conv-info">
-                  <div className="conv-name">{getConvName(conv)}</div>
-                  <div className="conv-sub">
-                    {conv.type === 'group'
-                      ? `${conv.members?.length ?? 0} members`
-                      : 'Direct message'}
+                <div 
+                  style={{ display: 'flex', alignItems: 'center', flex: 1, cursor: 'pointer' }}
+                  onClick={() => navigate(`/messages/${conv.id}`)}
+                >
+                  <div className={`conv-avatar ${conv.type === 'group' ? 'conv-avatar-group' : ''}`}>
+                    {conv.type === 'group' ? '👥' : getInitials(conv)}
                   </div>
+                  <div className="conv-info">
+                    <div className="conv-name">{getConvName(conv)}</div>
+                    <div className="conv-sub">
+                      {conv.type === 'group'
+                        ? `${conv.members?.length ?? 0} members`
+                        : 'Direct message'}
+                    </div>
+                  </div>
+                  <span className="conv-badge">{conv.type}</span>
+                  <span style={{ color: 'var(--text-tertiary)', fontSize: '0.85rem' }}>›</span>
                 </div>
-                <span className="conv-badge">{conv.type}</span>
-                <span style={{ color: 'var(--text-tertiary)', fontSize: '0.85rem' }}>›</span>
+                
+                {/* //this btn isnt workring so it gets removed// isTeacherOrAdmin && (
+                  <button
+                    className="btn btn-ghost btn-icon btn-sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteConversation(conv.id, getConvName(conv));
+                    }}
+                    style={{ color: 'var(--red)', marginLeft: '0.5rem' }}
+                    title="Delete conversation"
+                  >
+                    🗑️
+                  </button>
+                )*/}
               </div>
             ))}
           </div>
         )}
       </main>
 
-      {/* Create group modal */}
-      {showModal && (
-        <div className="modal-backdrop" onClick={() => setShowModal(false)}>
+      {/* Create Group Modal */}
+      {showCreateModal && (
+        <div className="modal-backdrop" onClick={() => setShowCreateModal(false)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <span className="modal-title">Create Group Chat</span>
-              <button className="btn btn-ghost btn-icon btn-sm" onClick={() => setShowModal(false)}>✕</button>
+              <button className="btn btn-ghost btn-icon btn-sm" onClick={() => setShowCreateModal(false)}>✕</button>
             </div>
             <form onSubmit={createGroup}>
               <div className="form-group">
@@ -127,22 +207,54 @@ export default function MessagesPage() {
                   required
                 />
               </div>
-              <div className="form-group">
-                <label>Member IDs (comma-separated)</label>
-                <textarea
-                  rows={3}
-                  value={memberIds}
-                  onChange={e => setMemberIds(e.target.value)}
-                  placeholder="uuid1, uuid2, …"
-                />
-              </div>
               <div className="modal-footer">
-                <button type="button" className="btn btn-ghost" onClick={() => setShowModal(false)}>Cancel</button>
+                <button type="button" className="btn btn-ghost" onClick={() => setShowCreateModal(false)}>Cancel</button>
                 <button type="submit" className="btn btn-primary">Create Group</button>
               </div>
             </form>
           </div>
         </div>
+      )}
+
+      {/* Join Group Modal */}
+      {showJoinModal && (
+        <div className="modal-backdrop" onClick={() => setShowJoinModal(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <span className="modal-title">Join Group Chat</span>
+              <button className="btn btn-ghost btn-icon btn-sm" onClick={() => setShowJoinModal(false)}>✕</button>
+            </div>
+            <form onSubmit={joinByCode}>
+              <div className="form-group">
+                <label>Invite Code</label>
+                <input
+                  placeholder="Enter 6-character code"
+                  value={joinCode}
+                  onChange={e => setJoinCode(e.target.value.toUpperCase())}
+                  maxLength={6}
+                  style={{ textTransform: 'uppercase', letterSpacing: '0.1em' }}
+                  required
+                />
+                <small style={{ color: 'var(--text-tertiary)', marginTop: '0.5rem', display: 'block' }}>
+                  Ask your teacher for the group invite code
+                </small>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-ghost" onClick={() => setShowJoinModal(false)}>Cancel</button>
+                <button type="submit" className="btn btn-primary">Join Group</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Toast */}
+      {toast && (
+        <Toast 
+          message={toast.message} 
+          type={toast.type} 
+          onClose={() => setToast(null)} 
+        />
       )}
     </>
   );
