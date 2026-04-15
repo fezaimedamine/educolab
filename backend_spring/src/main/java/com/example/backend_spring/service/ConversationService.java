@@ -294,7 +294,7 @@ public class ConversationService {
         messagingTemplate.convertAndSend("/topic/conversations/" + conversationId + "/events", dto);
     }
 
-    private void createMessageNotifications(UUID conversationId, UUID senderId, UUID messageId) {
+    /*private void createMessageNotifications(UUID conversationId, UUID senderId, UUID messageId) {
         List<ConversationMember> members = memberRepository.findById_ConversationId(conversationId);
         List<Notification> notifications = members.stream()
                 .filter(m -> !m.getId().getUserId().equals(senderId))
@@ -305,7 +305,7 @@ public class ConversationService {
                         .build())
                 .toList();
         notificationRepository.saveAll(notifications);
-    }
+    } */
 
     public boolean isMember(UUID conversationId, UUID userId) {
         return memberRepository.existsById_UserIdAndId_ConversationId(userId, conversationId);

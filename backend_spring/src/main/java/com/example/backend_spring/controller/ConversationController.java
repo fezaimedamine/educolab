@@ -3,6 +3,8 @@ package com.example.backend_spring.controller;
 import com.example.backend_spring.dto.messaging.*;
 import com.example.backend_spring.entity.MessageAttachment;
 import com.example.backend_spring.entity.User;
+import com.example.backend_spring.exception.ForbiddenException;
+import com.example.backend_spring.repository.ConversationEventRepository;
 import com.example.backend_spring.repository.MessageAttachmentRepository;
 import com.example.backend_spring.repository.UserRepository;
 import com.example.backend_spring.service.ConversationService;
@@ -31,6 +33,7 @@ public class ConversationController {
     private final FileStorageService fileStorageService;
     private final MessageAttachmentRepository attachmentRepository;
     private final UserRepository userRepository;
+    private final ConversationEventRepository eventRepository;
 
     @GetMapping
     public ResponseEntity<List<ConversationResponse>> getMyConversations(
@@ -204,5 +207,28 @@ public class ConversationController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, 
                         "inline; filename=\"" + attachment.getFileName() + "\"")
                 .body(resource);
+    }
+
+    @GetMapping("/{conversationId}/events")
+    public List<ConversationEventDto> getEvents(@PathVariable UUID conversationId, @AuthenticationPrincipal UserDetails userDetails) {
+        User user = userRepository.findByEmail(userDetails.getUsername()).orElseThrow();
+        
+        if (!conversationService.isMember(conversationId, user.getId())) {
+            throw new ForbiddenException("Access denied");
+        }
+        
+        return eventRepository.findByConversationIdWithUsers(conversationId)  // NEW QUERY
+            .stream()
+            .map(e -> ConversationEventDto.builder()
+                .id(e.getId())
+                .conversationId(conversationId)
+                .eventType(e.getEventType())
+                .userId(e.getUser().getId())
+                .userName(e.getUser().getFirstName() + " " + e.getUser().getLastName())
+                .triggeredById(e.getTriggeredBy() != null ? e.getTriggeredBy().getId() : null)
+                .triggeredByName(e.getTriggeredBy() != null ? e.getTriggeredBy().getFirstName() + " " + e.getTriggeredBy().getLastName() : null)
+                .createdAt(e.getCreatedAt())
+                .build())
+            .toList();
     }
 }

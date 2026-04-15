@@ -100,6 +100,7 @@ export default function ChatPage() {
 
         // Subscribe to conversation events (join/leave)
         client.subscribe(`/topic/conversations/${id}/events`, (message) => {
+          //console.log("EVENT RECEIVED:", message.body);
           const event = JSON.parse(message.body);
           setEvents(prev => [...prev, event]);
           // Refresh conversation to update member list
@@ -120,9 +121,15 @@ export default function ChatPage() {
     };
   }, [id]);
 
+  const fetchEvents = async () => {
+    const { data } = await api.get(`/conversations/${id}/events`);
+    setEvents(data);
+  };
+
   useEffect(() => {
     fetchConversation();
     fetchMessages().finally(() => setLoading(false));
+    fetchEvents();
   }, [id]);
 
   useEffect(() => {
