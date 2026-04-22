@@ -12,4 +12,10 @@ public class CreateAnnouncementRequest {
     private String content;
 
     private String targetGroup; // null = all groups
+
+    private String courseName;
+    private java.time.OffsetDateTime deadline;
+    private String tags;
+    private String attachments;
+    private String summary;
 }

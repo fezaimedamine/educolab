@@ -7,37 +7,19 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "announcements")
+@Table(name = "announcement_comments")
 @Getter @Setter @Builder @NoArgsConstructor @AllArgsConstructor
-public class Announcement {
+public class AnnouncementComment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false, length = 255)
-    private String title;
+    @Column(name = "announcement_id", nullable = false)
+    private UUID announcementId;
 
     @Column(nullable = false)
     private String content;
-
-    @Column(name = "target_group", length = 100)
-    private String targetGroup;
-
-    @Column(name = "course_name", length = 255)
-    private String courseName;
-
-    @Column(name = "deadline")
-    private OffsetDateTime deadline;
-
-    @Column(name = "tags", columnDefinition = "text")
-    private String tags;
-
-    @Column(name = "attachments", columnDefinition = "text")
-    private String attachments;
-
-    @Column(name = "summary", columnDefinition = "text")
-    private String summary;
 
     @Column(name = "created_by", nullable = false)
     private UUID createdBy;

@@ -36,7 +36,6 @@ public class AnnouncementController {
             @Valid @RequestBody CreateAnnouncementRequest req,
             @AuthenticationPrincipal UserDetails userDetails) {
         User author = userService.findByEmail(userDetails.getUsername());
-        enforceTeacherOrAdmin(author);
         return ResponseEntity.ok(announcementService.create(req, author));
     }
 
@@ -49,10 +48,36 @@ public class AnnouncementController {
         return ResponseEntity.noContent().build();
     }
 
-    private void enforceTeacherOrAdmin(User user) {
-        switch (user.getRole()) {
-            case STUDENT -> throw new ForbiddenException("Students cannot create announcements");
-            default -> {}
-        }
+    @GetMapping("/{id}/comments")
+    public ResponseEntity<List<com.example.backend_spring.dto.announcement.CommentResponse>> getComments(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        User viewer = userService.findByEmail(userDetails.getUsername());
+        return ResponseEntity.ok(announcementService.getComments(id, viewer));
+    }
+
+    @PostMapping("/{id}/comments")
+    public ResponseEntity<com.example.backend_spring.dto.announcement.CommentResponse> addComment(
+            @PathVariable UUID id,
+            @Valid @RequestBody com.example.backend_spring.dto.announcement.CreateCommentRequest req,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        User author = userService.findByEmail(userDetails.getUsername());
+        return ResponseEntity.ok(announcementService.addComment(id, req, author));
+    }
+
+    @GetMapping("/read-status")
+    public ResponseEntity<List<UUID>> getReadStatus(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        User viewer = userService.findByEmail(userDetails.getUsername());
+        return ResponseEntity.ok(announcementService.getReadAnnouncements(viewer));
+    }
+
+    @PostMapping("/{id}/read")
+    public ResponseEntity<Void> markAsRead(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        User viewer = userService.findByEmail(userDetails.getUsername());
+        announcementService.markAsRead(id, viewer);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -53,6 +53,54 @@
   --transition: all var(--dur-base) var(--ease);
 }
 
+/* ── Light Mode ── */
+[data-theme="light"] {
+  /* Colors */
+  --bg:            #f8f9fc;
+  --surface:       #ffffff;
+  --surface-2:     #f1f3f8;
+  --surface-3:     #e8ecf4;
+  --border:        rgba(0,0,0,0.08);
+  --border-hover:  rgba(0,0,0,0.18);
+  --border-active: rgba(99,102,241,0.5);
+
+  /* Brand stays the same */
+  --indigo:        #6366f1;
+  --indigo-light:  #4f46e5;
+  --indigo-dark:   #4338ca;
+  --indigo-glow:   rgba(99,102,241,0.15);
+  --violet:        #7c3aed;
+  --emerald:       #059669;
+  --emerald-glow:  rgba(5,150,105,0.15);
+  --amber:         #d97706;
+  --rose:          #e11d48;
+  --rose-glow:     rgba(225,29,72,0.12);
+
+  /* Text — inverted */
+  --text-primary:  #0f0f13;
+  --text-secondary:#4b5563;
+  --text-tertiary: #9ca3af;
+
+  /* Softer shadows for light */
+  --shadow-sm:  0 1px 3px rgba(0,0,0,0.08);
+  --shadow:     0 4px 16px rgba(0,0,0,0.1);
+  --shadow-lg:  0 8px 32px rgba(0,0,0,0.12);
+  --shadow-xl:  0 16px 64px rgba(0,0,0,0.15);
+}
+
+/* ── Theme transition — smooth switch ── */
+*, *::before, *::after {
+  transition: background-color var(--dur-base) var(--ease),
+              border-color      var(--dur-base) var(--ease),
+              color             var(--dur-fast) var(--ease),
+              box-shadow        var(--dur-base) var(--ease);
+}
+
+/* Exception: keep animation-driven transitions unaffected */
+.spinner, [class*="msg-row"], [class*="page-enter"] {
+  transition: none !important;
+}
+
 /* ── Base ── */
 html { scroll-behavior: smooth; }
 
@@ -533,4 +581,117 @@ textarea { resize: vertical; min-height: 80px; line-height: 1.6; }
   .form-row { grid-template-columns: 1fr; }
   .page { padding: 1.25rem 1rem 3rem; }
   h1 { font-size: 1.4rem; }
+}
+
+/* ─────────────────────────────────────────────
+   Light Mode — element-specific overrides
+   These fix items that use rgba(255,255,255,...) 
+   which don't automatically invert via CSS vars
+───────────────────────────────────────────── */
+[data-theme="light"] body::before {
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99,102,241,0.07), transparent),
+    radial-gradient(ellipse 60% 40% at 80% 120%, rgba(139,92,246,0.05), transparent);
+}
+
+[data-theme="light"] input,
+[data-theme="light"] select,
+[data-theme="light"] textarea {
+  background: #ffffff;
+  color: #0f0f13;
+}
+
+[data-theme="light"] input::placeholder,
+[data-theme="light"] textarea::placeholder {
+  color: #9ca3af;
+}
+
+[data-theme="light"] select option {
+  background: #ffffff;
+  color: #0f0f13;
+}
+
+/* Navbar in light mode */
+[data-theme="light"] .navbar {
+  background: rgba(248, 249, 252, 0.9);
+  border-bottom-color: rgba(0,0,0,0.08);
+}
+
+/* Auth page in light mode */
+[data-theme="light"] .auth-root {
+  background: #f8f9fc;
+  background-image:
+    radial-gradient(ellipse 80% 60% at 50% -10%, rgba(99,102,241,0.08), transparent),
+    radial-gradient(ellipse 50% 40% at 100% 110%, rgba(139,92,246,0.06), transparent);
+}
+
+/* Auth card stripe stays */
+[data-theme="light"] .auth-card::before {
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+}
+
+/* Tags in light mode — slightly more contrast */
+[data-theme="light"] .tag-student {
+  background: rgba(99,102,241,0.08);
+  color: #4338ca;
+  border-color: rgba(99,102,241,0.25);
+}
+
+[data-theme="light"] .tag-teacher {
+  background: rgba(5,150,105,0.08);
+  color: #065f46;
+  border-color: rgba(5,150,105,0.25);
+}
+
+[data-theme="light"] .tag-admin {
+  background: rgba(225,29,72,0.08);
+  color: #9f1239;
+  border-color: rgba(225,29,72,0.25);
+}
+
+/* Empty state dashed border */
+[data-theme="light"] .empty-state {
+  border-color: rgba(0,0,0,0.12);
+}
+
+/* Scrollbar in light mode */
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+}
+
+/* Chat message bubble (theirs) in light mode */
+[data-theme="light"] .msg-row.theirs .msg-bubble {
+  background: #f1f3f8;
+  border-color: rgba(0,0,0,0.08);
+  color: #0f0f13;
+}
+
+/* Modal backdrop */
+[data-theme="light"] .modal-backdrop {
+  background: rgba(0,0,0,0.4);
+}
+
+[data-theme="light"] .modal {
+  box-shadow: 0 16px 64px rgba(0,0,0,0.15);
+}
+
+/* Stat number in admin — keep it brand colored */
+[data-theme="light"] .stat-value {
+  color: var(--indigo);
+}
+
+/* Meeting upcoming border */
+[data-theme="light"] .meeting-card.upcoming {
+  border-left-color: var(--emerald);
+}
+
+/* Notifications unread item */
+[data-theme="light"] .notif-item.unread {
+  background: rgba(99,102,241,0.04);
+  border-left-color: var(--indigo);
+}
+
+/* Dir filters bg */
+[data-theme="light"] .dir-filters {
+  background: #ffffff;
 }

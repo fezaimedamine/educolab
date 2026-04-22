@@ -1,0 +1,2 @@
+docker exec educolab_db psql -U postgres -d educolab -c "ALTER TABLE announcements ADD COLUMN course_name VARCHAR(255), ADD COLUMN deadline TIMESTAMPTZ, ADD COLUMN tags TEXT, ADD COLUMN attachments TEXT, ADD COLUMN summary TEXT;"
+$env:PGPASSWORD='postgres'; psql -U postgres -d educolab -c "ALTER TABLE announcements ADD COLUMN course_name VARCHAR(255), ADD COLUMN deadline TIMESTAMPTZ, ADD COLUMN tags TEXT, ADD COLUMN attachments TEXT, ADD COLUMN summary TEXT;"

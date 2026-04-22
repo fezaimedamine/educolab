@@ -10,7 +10,7 @@ import java.util.UUID;
 
 public interface MeetingRepository extends JpaRepository<Meeting, UUID> {
 
-    @Query("SELECT m FROM Meeting m WHERE m.targetGroup IS NULL OR m.targetGroup = :group ORDER BY m.startTime ASC")
+    @Query("SELECT m FROM Meeting m WHERE m.targetGroup IS NULL OR LOWER(TRIM(m.targetGroup)) = LOWER(TRIM(:group)) ORDER BY m.startTime ASC")
     List<Meeting> findVisibleForStudent(@Param("group") String group);
 
     List<Meeting> findAllByOrderByStartTimeAsc();

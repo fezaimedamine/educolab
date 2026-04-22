@@ -8,9 +8,10 @@ import java.util.UUID;
 
 @Data
 public class MeetingResponse {
-    private UUID id;
+    private String id;
     private String title;
     private String description;
+    private String courseName;
     private String meetLink;
     private OffsetDateTime startTime;
     private OffsetDateTime endTime;
@@ -21,9 +22,10 @@ public class MeetingResponse {
 
     public static MeetingResponse from(Meeting m) {
         MeetingResponse r = new MeetingResponse();
-        r.id = m.getId();
+        r.id = m.getId().toString();
         r.title = m.getTitle();
         r.description = m.getDescription();
+        r.courseName = m.getCourseName();
         r.meetLink = m.getMeetLink();
         r.startTime = m.getStartTime();
         r.endTime = m.getEndTime();

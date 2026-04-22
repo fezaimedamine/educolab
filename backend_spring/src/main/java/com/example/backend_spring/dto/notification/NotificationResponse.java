@@ -12,7 +12,10 @@ public class NotificationResponse {
     private UUID userId;
     private String type;
     private UUID referenceId;
-    private boolean isRead;
+    private String title;
+    private String content;
+    private String senderName;
+    private boolean read;
     private OffsetDateTime createdAt;
 
     public static NotificationResponse from(Notification n) {
@@ -21,7 +24,10 @@ public class NotificationResponse {
         r.userId = n.getUserId();
         r.type = n.getType().name().toLowerCase();
         r.referenceId = n.getReferenceId();
-        r.isRead = n.isRead();
+        r.title = n.getTitle();
+        r.content = n.getContent();
+        r.senderName = n.getSenderName();
+        r.read = n.isRead();
         r.createdAt = n.getCreatedAt();
         return r;
     }

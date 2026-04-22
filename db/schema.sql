@@ -156,6 +156,25 @@ CREATE TABLE message_attachments (
 );
  
 CREATE INDEX idx_attachments_message ON message_attachments (message_id);
+
+CREATE TABLE announcement_comments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    announcement_id UUID NOT NULL,
+    content TEXT NOT NULL,
+    created_by UUID NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_created_by FOREIGN KEY (created_by) REFERENCES users(id)
+);
+
+CREATE TABLE announcement_reads (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    announcement_id UUID NOT NULL,
+    user_id UUID NOT NULL,
+    CONSTRAINT uq_announcement_user UNIQUE (announcement_id, user_id),
+    CONSTRAINT fk_announcement FOREIGN KEY (announcement_id) REFERENCES announcements(id),
+    CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
  
 -- ============================================================
 -- END OF MIGRATION

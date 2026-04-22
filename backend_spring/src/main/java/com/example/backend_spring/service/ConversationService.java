@@ -144,6 +144,8 @@ public class ConversationService {
         // Manually setting sender for the Response DTO later
         message.setSender(sender); 
         message = messageRepository.save(message);
+        
+        createMessageNotifications(conversationId, senderId, content != null ? content : ""); // ADD THIS LINE
 
         // 2. Handle Attachments
         List<AttachmentDto> attachmentDTOs = new ArrayList<>();
@@ -294,18 +296,24 @@ public class ConversationService {
         messagingTemplate.convertAndSend("/topic/conversations/" + conversationId + "/events", dto);
     }
 
-    /*private void createMessageNotifications(UUID conversationId, UUID senderId, UUID messageId) {
+    private void createMessageNotifications(UUID conversationId, UUID senderId, String content) {
+        User sender = userRepository.findById(senderId).orElseThrow();
+        String senderName = sender.getFirstName() + " " + sender.getLastName();
+        
         List<ConversationMember> members = memberRepository.findById_ConversationId(conversationId);
         List<Notification> notifications = members.stream()
                 .filter(m -> !m.getId().getUserId().equals(senderId))
                 .map(m -> Notification.builder()
                         .userId(m.getId().getUserId())
                         .type(NotificationType.MESSAGE)
-                        .referenceId(messageId)
+                        .referenceId(conversationId)
+                        .title("New Message")
+                        .content(content)
+                        .senderName(senderName)
                         .build())
                 .toList();
         notificationRepository.saveAll(notifications);
-    } */
+    }
 
     public boolean isMember(UUID conversationId, UUID userId) {
         return memberRepository.existsById_UserIdAndId_ConversationId(userId, conversationId);

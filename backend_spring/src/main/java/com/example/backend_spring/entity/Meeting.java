@@ -21,6 +21,9 @@ public class Meeting {
     @Column
     private String description;
 
+    @Column(name = "course_name")
+    private String courseName;
+
     @Column(name = "meet_link", nullable = false)
     private String meetLink;
 

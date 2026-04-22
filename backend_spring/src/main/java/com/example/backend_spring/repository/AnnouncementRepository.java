@@ -11,7 +11,7 @@ import java.util.UUID;
 public interface AnnouncementRepository extends JpaRepository<Announcement, UUID> {
 
     // Returns announcements visible to a student: global (targetGroup null) or in their group
-    @Query("SELECT a FROM Announcement a WHERE a.targetGroup IS NULL OR a.targetGroup = :group ORDER BY a.createdAt DESC")
+    @Query("SELECT a FROM Announcement a WHERE a.targetGroup IS NULL OR LOWER(TRIM(a.targetGroup)) = LOWER(TRIM(:group)) ORDER BY a.createdAt DESC")
     List<Announcement> findVisibleForStudent(@Param("group") String group);
 
     List<Announcement> findAllByOrderByCreatedAtDesc();
