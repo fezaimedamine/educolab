@@ -27,6 +27,7 @@ public class MeetingService {
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
 
+    @Transactional(readOnly = true)
     public List<MeetingResponse> getMeetings(User viewer) {
         List<Meeting> meetings = switch (viewer.getRole()) {
             case STUDENT -> meetingRepository.findVisibleForStudent(viewer.getGroupName());
@@ -40,6 +41,7 @@ public class MeetingService {
         Meeting meeting = Meeting.builder()
                 .title(req.getTitle())
                 .description(req.getDescription())
+                .courseName(req.getCourseName())
                 .meetLink(req.getMeetLink())
                 .startTime(req.getStartTime())
                 .endTime(req.getEndTime())
@@ -51,16 +53,22 @@ public class MeetingService {
         List<User> targets = req.getTargetGroup() == null
                 ? userRepository.findByIsActiveTrue()
                 : userRepository.findByIsActiveTrue().stream()
-                        .filter(u -> req.getTargetGroup().equals(u.getGroupName()))
+                        .filter(u -> u.getGroupName() != null && u.getGroupName().trim().equalsIgnoreCase(req.getTargetGroup().trim()))
                         .toList();
 
         final UUID meetingId = meeting.getId();
+        final String authorName = author.getFirstName() + " " + author.getLastName();
+        final String meetingTitle = meeting.getTitle();
+
         List<Notification> notifications = targets.stream()
                 .filter(u -> !u.getId().equals(author.getId()))
                 .map(u -> Notification.builder()
                         .userId(u.getId())
                         .type(NotificationType.MEETING)
                         .referenceId(meetingId)
+                        .title("Scheduled Meeting")
+                        .content(meetingTitle)
+                        .senderName(authorName)
                         .build())
                 .toList();
         notificationRepository.saveAll(notifications);

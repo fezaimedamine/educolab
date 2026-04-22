@@ -14,6 +14,8 @@ public class CreateMeetingRequest {
 
     private String description;
 
+    private String courseName;
+
     @NotBlank
     private String meetLink;
 

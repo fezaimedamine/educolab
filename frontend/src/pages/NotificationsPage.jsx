@@ -1,96 +1,212 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import Navbar from '../components/Navbar';
+import { 
+  Bell, CheckCheck, MessageSquare, 
+  Megaphone, Calendar, Clock, User,
+  ExternalLink, BellOff, Sparkles,
+  Inbox, Filter, MoreHorizontal
+} from 'lucide-react';
 import './NotificationsPage.css';
 
-const TYPE_ICON = {
-  message:      '💬',
-  announcement: '📢',
-  meeting:      '📅',
+const TYPE_CONFIG = {
+  message:      { icon: <MessageSquare size={16} />, color: '#6366f1', label: 'Message',      path: (id) => `/messages/${id}` },
+  announcement: { icon: <Megaphone size={16} />,     color: '#f59e0b', label: 'Announcement', path: () => `/announcements` },
+  meeting:      { icon: <Calendar size={16} />,      color: '#10b981', label: 'Meeting',      path: () => `/meetings` },
 };
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('all'); // all, unread, message, announcement, meeting
+  const navigate = useNavigate();
 
-  useEffect(() => {
+  const fetchNotifs = () => {
     api.get('/notifications')
       .then(r => setNotifications(r.data))
+      .catch(err => console.error(err))
       .finally(() => setLoading(false));
+  }
+
+  useEffect(() => {
+    fetchNotifs();
   }, []);
 
+  const filteredNotifs = useMemo(() => {
+    if (filter === 'all') return notifications;
+    if (filter === 'unread') return notifications.filter(n => !n.read);
+    return notifications.filter(n => n.type === filter);
+  }, [notifications, filter]);
+
   const markAllRead = async () => {
-    await api.patch('/notifications/read-all');
-    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+    try {
+      await api.patch('/notifications/read-all');
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    } catch (e) {
+      console.error(e);
+    }
   };
 
-  const markRead = async (id) => {
-    await api.patch(`/notifications/${id}/read`);
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+  const handleNotifClick = async (n) => {
+    if (!n.read) {
+      try {
+        await api.patch(`/notifications/${n.id}/read`);
+        setNotifications(prev => prev.map(item => item.id === n.id ? { ...item, read: true } : item));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    
+    const config = TYPE_CONFIG[n.type];
+    if (config) {
+      navigate(config.path(n.referenceId));
+    }
   };
 
-  const fmt = (dt) => new Date(dt).toLocaleString('en-GB', {
-    day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
-  });
+  const fmt = (dt) => {
+    const d = new Date(dt);
+    const now = new Date();
+    const diff = now - d;
+    if (diff < 60000) return 'Just now';
+    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+  };
 
-  const unread = notifications.filter(n => !n.isRead);
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
-    <>
+    <div className="notif-layout">
       <Navbar />
-      <main className="page">
-        {/* Header */}
-        <div className="page-header">
-          <div>
-            <h1>Notifications</h1>
-            <p>
-              {unread.length > 0
-                ? `${unread.length} unread notification${unread.length !== 1 ? 's' : ''}`
-                : 'All caught up!'}
-            </p>
+      
+      <div className="notif-container">
+        {/* Sidebar Filters */}
+        <aside className="notif-sidebar">
+          <div className="sidebar-header">
+            <div className="inbox-icon">
+              <Inbox size={20} />
+            </div>
+            <span>Activity Center</span>
           </div>
-        </div>
-
-        {/* Unread banner */}
-        {unread.length > 0 && (
-          <div className="notif-summary-bar">
-            <span>🔵 {unread.length} new notification{unread.length !== 1 ? 's' : ''}</span>
-            <button className="btn btn-ghost btn-sm" onClick={markAllRead}>
-              Mark all as read
+          
+          <nav className="filter-nav">
+            <button className={`filter-item ${filter === 'all' ? 'active' : ''}`} onClick={() => setFilter('all')}>
+              <Bell size={18} />
+              <span>All Activity</span>
+              <span className="count">{notifications.length}</span>
             </button>
-          </div>
-        )}
+            <button className={`filter-item ${filter === 'unread' ? 'active' : ''}`} onClick={() => setFilter('unread')}>
+              <CheckCheck size={18} />
+              <span>Unread</span>
+              {unreadCount > 0 && <span className="count badge-unread">{unreadCount}</span>}
+            </button>
+            <div className="nav-divider">Categories</div>
+            <button className={`filter-item ${filter === 'message' ? 'active' : ''}`} onClick={() => setFilter('message')}>
+              <MessageSquare size={18} />
+              <span>Messages</span>
+            </button>
+            <button className={`filter-item ${filter === 'announcement' ? 'active' : ''}`} onClick={() => setFilter('announcement')}>
+              <Megaphone size={18} />
+              <span>Announcements</span>
+            </button>
+            <button className={`filter-item ${filter === 'meeting' ? 'active' : ''}`} onClick={() => setFilter('meeting')}>
+              <Calendar size={18} />
+              <span>Meetings</span>
+            </button>
+          </nav>
 
-        {/* List */}
-        {loading ? (
-          <p className="loading">Loading notifications…</p>
-        ) : notifications.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-state-icon">🔔</div>
-            <h3>No notifications</h3>
-            <p>You&apos;re all caught up!</p>
+          <div className="sidebar-footer">
+            <p>Last checked: {new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
           </div>
-        ) : (
-          <div className="notif-list">
-            {notifications.map(n => (
-              <div
-                key={n.id}
-                className={`notif-item ${!n.isRead ? 'unread' : ''}`}
-                onClick={() => !n.isRead && markRead(n.id)}
-              >
-                <div className="notif-icon-wrap">
-                  {TYPE_ICON[n.type] ?? '🔔'}
-                </div>
-                <div className="notif-body">
-                  <div className="notif-type">{n.type} notification</div>
-                  <div className="notif-time">{fmt(n.createdAt)}</div>
-                </div>
-                {!n.isRead && <div className="notif-dot" />}
+        </aside>
+
+        {/* Main Feed */}
+        <main className="notif-main-feed">
+          <header className="feed-header">
+            <div className="title-group">
+              <h1>{filter === 'all' ? 'Your Feed' : filter.charAt(0).toUpperCase() + filter.slice(1)}</h1>
+              <div className="status-label">
+                <Sparkles size={14} />
+                <span>Modern Experience</span>
               </div>
-            ))}
+            </div>
+            
+            <div className="header-actions">
+              {unreadCount > 0 && (
+                <button className="mark-read-global" onClick={markAllRead}>
+                  Mark all as read
+                </button>
+              )}
+            </div>
+          </header>
+
+          <div className="feed-content">
+            {loading ? (
+              <div className="feed-loader">
+                <div className="pulse-circle"></div>
+                <p>Curating your updates...</p>
+              </div>
+            ) : filteredNotifs.length === 0 ? (
+              <div className="feed-empty">
+                <div className="creative-empty-icon">
+                  <BellOff size={64} />
+                  <div className="aura"></div>
+                </div>
+                <h2>Nothing new here</h2>
+                <p>Enjoy your productive time! We'll alert you when there's an update.</p>
+                <button className="btn-refresh" onClick={fetchNotifs}>Refresh Feed</button>
+              </div>
+            ) : (
+              <div className="notif-stack">
+                {filteredNotifs.map((n, idx) => {
+                  const config = TYPE_CONFIG[n.type] || { icon: <Bell size={16} />, color: '#64748b' };
+                  return (
+                    <div 
+                      key={n.id} 
+                      className={`notif-creative-card ${!n.read ? 'is-unread' : ''}`}
+                      style={{ '--delay': `${idx * 0.05}s`, '--accent': config.color }}
+                      onClick={() => handleNotifClick(n)}
+                    >
+                      <div className="card-indicator" style={{ backgroundColor: config.color }}></div>
+                      
+                      <div className="card-body">
+                        <div className="card-left">
+                          <div className="avatar-group">
+                            <div className="main-avatar">
+                              {n.senderName?.[0] || '?'}
+                            </div>
+                            <div className="type-badge" style={{ backgroundColor: config.color }}>
+                              {config.icon}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="card-center">
+                          <div className="card-meta">
+                            <span className="sender">{n.senderName || 'EduColab'}</span>
+                            <span className="dot">•</span>
+                            <span className="time">{fmt(n.createdAt)}</span>
+                          </div>
+                          <h3 className="card-title">{n.title || 'Notification'}</h3>
+                          <p className="card-text">{n.content}</p>
+                        </div>
+
+                        <div className="card-right">
+                          <div className="action-button">
+                            <ExternalLink size={18} />
+                          </div>
+                          {!n.read && <div className="unread-pulse"></div>}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
-        )}
-      </main>
-    </>
+        </main>
+      </div>
+    </div>
   );
 }

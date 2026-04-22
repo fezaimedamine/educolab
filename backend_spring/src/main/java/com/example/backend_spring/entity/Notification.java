@@ -26,9 +26,18 @@ public class Notification {
     @Column(name = "reference_id", nullable = false)
     private UUID referenceId;
 
+    @Column
+    private String title;
+
+    @Column(columnDefinition = "TEXT")
+    private String content;
+
+    @Column(name = "sender_name")
+    private String senderName;
+
     @Column(name = "is_read", nullable = false)
     @Builder.Default
-    private boolean isRead = false;
+    private boolean read = false;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;

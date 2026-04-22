@@ -24,25 +24,16 @@ public class NotificationService {
     }
 
     public long countUnread(UUID userId) {
-        return notificationRepository.countByUserIdAndIsReadFalse(userId);
+        return notificationRepository.countByUserIdAndReadFalse(userId);
     }
 
     @Transactional
     public void markRead(UUID notificationId, UUID userId) {
-        Notification n = notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new ResourceNotFoundException("Notification not found"));
-        if (!n.getUserId().equals(userId)) {
-            throw new ForbiddenException("Access denied");
-        }
-        n.setRead(true);
-        notificationRepository.save(n);
+        notificationRepository.markAsRead(notificationId, userId);
     }
 
     @Transactional
     public void markAllRead(UUID userId) {
-        List<Notification> unread = notificationRepository
-                .findByUserIdAndIsReadFalseOrderByCreatedAtDesc(userId);
-        unread.forEach(n -> n.setRead(true));
-        notificationRepository.saveAll(unread);
+        notificationRepository.markAllAsRead(userId);
     }
 }

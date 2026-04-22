@@ -104,6 +104,9 @@ public class ConversationService {
         message = messageRepository.save(message);
 
         // Notify other members
+        User sender = userRepository.findById(senderId).orElseThrow();
+        String senderName = sender.getFirstName() + " " + sender.getLastName();
+        
         List<ConversationMember> members = memberRepository.findById_ConversationId(conversationId);
         List<Notification> notifications = new ArrayList<>();
         final UUID messageId = message.getId();
@@ -112,7 +115,10 @@ public class ConversationService {
                 notifications.add(Notification.builder()
                         .userId(m.getId().getUserId())
                         .type(NotificationType.MESSAGE)
-                        .referenceId(messageId)
+                        .referenceId(conversationId)
+                        .title("New Message")
+                        .content(req.getContent())
+                        .senderName(senderName)
                         .build());
             }
         }
